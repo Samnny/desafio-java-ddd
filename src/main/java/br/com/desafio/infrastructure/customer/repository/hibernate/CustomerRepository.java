@@ -8,6 +8,7 @@ import jakarta.persistence.EntityManagerFactory;
 import org.springframework.stereotype.Repository;
 
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Repository
@@ -41,7 +42,29 @@ public class CustomerRepository implements CustomerRepositoryInterface {
 
 
     public CompletableFuture<Void> update(Customer entity) {
-        return null;
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        entityManager.getTransaction().begin();
+
+        CustomerModel customerModel = entityManager.find(CustomerModel.class, entity.getId());
+        if (customerModel == null) {
+            throw new RuntimeException("Customer not found");
+        }
+
+        customerModel.setName(entity.getName());
+        customerModel.setStreet(entity.getAddress().getStreet());
+        customerModel.setNumber(entity.getAddress().getNumber());
+        customerModel.setZipcode(entity.getAddress().getZip());
+        customerModel.setCity(entity.getAddress().getCity());
+        customerModel.setActive(entity.isActive());
+        customerModel.setRewardPoints(entity.getRewardPoints());
+
+        entityManager.merge(customerModel);
+        entityManager.getTransaction().commit();
+        entityManager.close();
+
+
+        return CompletableFuture.completedFuture(null);
     }
 
 
@@ -66,7 +89,21 @@ public class CustomerRepository implements CustomerRepositoryInterface {
 
 
     public CompletableFuture<Customer[]> findAll() {
-        return null;
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        List<CustomerModel> customerModels = entityManager.createQuery("SELECT c FROM CustomerModel c", CustomerModel.class).getResultList();
+        entityManager.close();
+
+        Customer[] customers = customerModels.stream().map(customerModel -> {
+            Customer customer = new Customer(customerModel.getId(), customerModel.getName());
+            Address address = new Address(customerModel.getStreet(), customerModel.getNumber(),
+                    customerModel.getZipcode(), customerModel.getCity());
+            customer.setAddress(address);
+            customer.addRewardPoints(customerModel.getRewardPoints());
+            customer.setActive(customerModel.getActive());
+            return customer;
+        }).toArray(Customer[]::new);
+
+        return CompletableFuture.completedFuture(customers);
     }
 
     public void close() {
