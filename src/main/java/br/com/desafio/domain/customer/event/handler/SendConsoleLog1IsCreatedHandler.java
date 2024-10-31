@@ -7,6 +7,6 @@ public class SendConsoleLog1IsCreatedHandler implements EventHandlerInterface<Cu
 
     @Override
     public void handle(CustomerCreatedEvent event) {
-
+        System.out.println("Esse é o primeiro console.log do evento: CustomerCreated");
     }
 }
