@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+    volumes:
+      - ./:/app
+    networks:
+      - api-java
+    entrypoint: sh -c "java -jar ./target/desafio-0.0.1-SNAPSHOT.jar"
+    ports:
+      - "8080:8080"
+
+
+networks:
+  api-java:
+    driver: bridge
+
+volumes:
+  mysql-api-java:
+    driver: local
